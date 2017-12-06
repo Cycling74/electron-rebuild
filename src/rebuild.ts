@@ -105,6 +105,16 @@ class Rebuilder {
 
     const rootPackageJson = await readPackageJson(this.buildPath);
     const markWaiters: Promise<void>[] = [];
+
+    // any extraModules which aren't dependencies in the root will be in the prodDeps set already.
+    // markChildrenAsProdDeps needs to be called to resolve them
+    // there may be a more elegant solution, but extraModules are presently
+    // broken without this change.
+    this.prodDeps.forEach((key) => {
+      this.prodDeps[key] = true;
+      markWaiters.push(this.markChildrenAsProdDeps(path.resolve(this.buildPath, 'node_modules', key)));
+    });
+
     const depKeys = [];
 
     if (this.types.indexOf('prod') !== -1 || this.onlyModules) {
